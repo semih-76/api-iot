@@ -1,4 +1,5 @@
 import { getDB } from '../config/db.js'
+import {ObjectId} from 'mongodb'
 
 export const lastMesures  = async (req, res) => {
     try {
@@ -40,3 +41,35 @@ export const recenteMesures = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+export const mesureById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Identifiant invalide"
+            });
+        }
+
+        const db = getDB();
+        const collection = db.collection("mesures");
+        const mesure = await collection.findOne({_id: new ObjectId(id)})
+
+        if (!mesure) {
+            return res.status(404).json({
+                message: "Mesures non trouvé"
+            });
+        }
+
+        res.json({
+            message: "Mesures récupéré avec succès",
+            mesure: mesure,
+        });
+    } catch(error) {
+        console.error("Erreur de récupération de la mesure", error.message);
+        res.status(500).json({
+            message: "Erreur de récupération de la mesure",
+        });
+    }
+};
