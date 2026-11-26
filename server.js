@@ -1,10 +1,13 @@
 import express from 'express'
 import { connectDB } from './src/config/db.js'
+import mesuresRoutes from './src/routes/mesuresRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+
+app.use(mesuresRoutes);
 
 app.get('/api/sante', (req, res) => {
      res.json({ status: "API Météo en ligne" });
