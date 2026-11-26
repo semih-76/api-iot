@@ -6,6 +6,6 @@ const router = express.Router();
 
 router.get("/api/mesures/derniere", lastMesures);
 
-router.get("/api/recente/mesures", recenteMesures);
+router.get("/api/mesures", recenteMesures);
 
 export default router;
