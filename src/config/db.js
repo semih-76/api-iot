@@ -7,7 +7,7 @@ export async function connectDB() {
     const client = new MongoClient(uri);
     await client.connect();
 
-    db = client.db('station-meteo');
+    db = client.db(process.env.MONGODB_DB || 'station_meteo');
     console.log("Connecté à MongoDB");
     return db;
 }
