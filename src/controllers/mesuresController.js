@@ -66,10 +66,55 @@ export const mesureById = async (req, res) => {
             message: "Mesures récupéré avec succès",
             mesure: mesure,
         });
-    } catch(error) {
+    } catch (error) {
         console.error("Erreur de récupération de la mesure", error.message);
         res.status(500).json({
             message: "Erreur de récupération de la mesure",
         });
     }
 };
+
+export const statsMesures = async (req, res) => {
+    try {
+        const db = getDB();
+        const collection = db.collection("mesures");
+        const  { debut, fin } = req.query;
+        const filtre = {};
+
+        if (debut || fin) {
+            filtre.instant_mesure = {};
+            if (debut){
+                filtre.instant_mesure.$gte = new Date(debut)
+            }
+            if (fin){
+                filtre.instant_mesure.$lte = new Date(fin)
+            }
+        }
+        const pipeline = [
+            { $match: filtre },
+            { $group:
+                    { _id: null,
+                        tempmin: {$min: "$temperature"},
+                        tempmax: {$max: "$temperature"},
+                        tempmoy: {$avg: "$temperature"},
+                        ventmin: {$min: "$vent_vitesse"},
+                        ventmax: {$max: "$vent_vitesse"},
+                        ventmoy: {$avg: "$vent_vitesse"},
+                        humiditemin: {$min: "$humidite"},
+                        humiditemax: {$max: "$humidite"},
+                        humiditemoy: {$avg: "$humidite"}
+                    }
+            }
+        ];
+        const mesures = await collection.aggregate(pipeline).toArray();
+        if (mesures.length === 0){
+            return res.status(404).json({
+                message: "Aucune mesure pour cette période"
+            })
+        }
+        res.status(200).json(mesures[0]);
+    } catch (error) {
+        console.error("Erreur dans statsMesures :", error);
+        res.status(500).json({ message: error.message });
+    }
+}
