@@ -118,3 +118,46 @@ export const statsMesures = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+export const createMesure = async (req, res) => {
+    try {
+        const db = getDB();
+        const collection = db.collection("mesures");
+        const mesure = req.body;
+        const erreurs = [];
+        if(!mesure.reference_capteur || typeof mesure.reference_capteur !== "string"){
+            erreurs.push("reference_capteur est invalide");
+        }
+        if(!mesure.instant_mesure || isNaN(new Date(mesure.instant_mesure).getTime())){
+            erreurs.push("instant_mesure est invalide");
+        }
+        if(typeof mesure.temperature !== "number"){
+            erreurs.push("temperature est invalide")
+        }
+        if(typeof mesure.vent_vitesse !== "number"){
+            erreurs.push("vent_vitesse est invalide")
+        }
+        if(typeof mesure.humidite !== "number" || mesure.humidite < 0 || mesure.humidite > 100){
+            erreurs.push("humidite est invalide")
+        }
+        if (erreurs.length > 0) {
+            await db.collection('journaux').insertOne({
+                date: new Date(),
+                type: "rejet_validation",
+                erreurs: erreurs,
+                donnees: mesure
+            })
+            return res.status(400).json({message: "Données de mesure invalides", erreurs})
+        }
+        mesure.instant_mesure = new Date(mesure.instant_mesure);
+        const resultat = await collection.insertOne(mesure);
+        res.status(201).json({
+            message: "Mesure enregistrée avec succès",
+            id: resultat.insertedId
+        });
+    } catch (error) {
+        if (error.code === 11000)
+        console.error("Erreur dans createMesure :", error);
+        res.status(500).json({ message: error.message });
+    }
+}
